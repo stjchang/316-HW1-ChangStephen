@@ -14,11 +14,13 @@ export default class PlaylistSongPrototype {
      * 
      * @param {string} initTitle The song title.
      * @param {string} initArtist The song artist.
+     * @param {number} initYear The year the song was released.
      * @param {string} initYouTubeId The YouTube id for the song as it would appear in a link.
      */
-    constructor(initTitle, initArtist, initYouTubeId) {
+    constructor(initTitle, initArtist, initYear, initYouTubeId) {
         this.title = initTitle;
         this.artist = initArtist;
+        this.year = initYear;
         this.youTubeId = initYouTubeId;
     }
 
@@ -28,7 +30,7 @@ export default class PlaylistSongPrototype {
      * @returns A deep copy of this object.
      */
     clone() {
-        let song = new PlaylistSongPrototype(this.title, this.artist, this.youTubeId);
+        let song = new PlaylistSongPrototype(this.title, this.artist, this.year, this.youTubeId);
         return song;
     }                    
 }

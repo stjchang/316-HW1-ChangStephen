@@ -177,6 +177,10 @@ export default class PlaylisterView {
             youTubeLink.target = 1;
             youTubeLink.innerHTML = song.title;
 
+            let youtubeIdSpan = document.createElement("span");
+            youtubeIdSpan.class = "song-card-youtube-id";
+            youtubeIdSpan.innerHTML = " (" + song.youTubeId + ")";
+
             let bySpan = document.createElement("span");
             bySpan.class = "song-card-by";
             bySpan.innerHTML = " by ";
@@ -189,6 +193,7 @@ export default class PlaylisterView {
             let songNumber = document.createTextNode("" + (i + 1) + ". ");
             itemDiv.appendChild(songNumber);
             itemDiv.appendChild(youTubeLink);
+            itemDiv.appendChild(youtubeIdSpan);
             itemDiv.appendChild(bySpan);
             itemDiv.appendChild(artistSpan);
 

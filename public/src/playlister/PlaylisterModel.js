@@ -310,8 +310,9 @@ export default class PlaylisterModel {
                     let songData = listData.songs[j];
                     let title = songData.title;
                     let artist = songData.artist;
+                    let year = songData.year;
                     let youTubeId = songData.youTubeId;
-                    songs[j] = new PlaylistSongPrototype(title, artist, youTubeId);
+                    songs[j] = new PlaylistSongPrototype(title, artist, year, youTubeId);
                 }
                 this.addNewList(listData.name, songs);
             }

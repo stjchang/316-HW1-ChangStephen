@@ -15,6 +15,36 @@ export default class PlaylisterController {
     }
 
     /**
+     * Handles confirming the song edit by updating the song with modal data.
+     */
+    confirmSongEdit() {
+        // GET THE SONG DATA FROM THE MODAL
+        let title = document.getElementById("edit-song-modal-title-textfield").value;
+        let youTubeId = document.getElementById("edit-song-modal-youTubeId-textfield").value;
+        let artist = document.getElementById("edit-song-modal-artist-textfield").value;
+        let year = parseInt(document.getElementById("edit-song-modal-year-textfield").value);
+
+        // UPDATE THE SONG DIRECTLY (for now, without transaction system)
+        let songIndex = this.model.getEditSongIndex();
+        let song = this.model.getSong(songIndex);
+        song.title = title;
+        song.youTubeId = youTubeId;
+        song.artist = artist;
+        song.year = year;
+
+        // REFRESH THE VIEW AND SAVE
+        this.model.view.refreshSongCards(this.model.currentList);
+        this.model.saveLists();
+
+        // ALLOW OTHER INTERACTIONS
+        this.model.toggleConfirmDialogOpen();
+
+        // CLOSE THE MODAL
+        let editSongModal = document.getElementById("edit-song-modal");
+        editSongModal.classList.remove("is-visible");
+    }
+
+    /**
      * This function defines the event handlers that will respond to interactions
      * with all the static user interface controls, meaning the controls that
      * exist in the original Web page. Note that additional handlers will need
@@ -34,7 +64,7 @@ export default class PlaylisterController {
      */
     registerEditToolbarHandlers() {
         // HANDLER FOR ADDING A NEW SONG BUTTON
-        document.getElementById("add-song-button").onmousedown = (event) => {
+        document.getElementById("add-song-button").onmousedown = (event) => {   
             this.model.addTransactionToCreateSong();
         }
         // HANDLER FOR UNDO BUTTON
@@ -57,6 +87,19 @@ export default class PlaylisterController {
      * are pressed in the three modals.
      */
     registerModalHandlers() {
+        document.getElementById("edit-song-confirm-button").onclick = (event) => {
+            this.confirmSongEdit();
+        }
+
+        // RESPOND TO ENTER KEY PRESS IN THE EDIT SONG MODAL
+        document.addEventListener('keydown', (event) => {
+            // Check if the edit song modal is visible and Enter key is pressed
+            let editSongModal = document.getElementById("edit-song-modal");
+            if (editSongModal.classList.contains("is-visible") && event.key === 'Enter') {
+                this.confirmSongEdit();
+            }
+        });
+
         // RESPOND TO THE USER CLOSING THE EDIT SONG MODAL VIA THE CANCEL BUTTON
         document.getElementById("edit-song-cancel-button").onclick = (event) => {
             // ALLOW OTHER INTERACTIONS
@@ -193,8 +236,9 @@ export default class PlaylisterController {
 
                 // LOAD THE SONG DATA INTO THE MODAL
                 document.getElementById("edit-song-modal-title-textfield").value = song.title;
-                document.getElementById("edit-song-modal-artist-textfield").value = song.artist;
                 document.getElementById("edit-song-modal-youTubeId-textfield").value = song.youTubeId;
+                document.getElementById("edit-song-modal-artist-textfield").value = song.artist;
+                document.getElementById("edit-song-modal-year-textfield").value = song.year;
 
                 // OPEN UP THE MODAL
                 let editSongModal = document.getElementById("edit-song-modal");
