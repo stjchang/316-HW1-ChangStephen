@@ -42,6 +42,7 @@
         </div>
         <div id="sidebar-heading">
             Your Playlists
+            <input type="button" id="add-playlist-button" value="+" class="add-playlist-button" />
         </div>
         <div id="playlist-cards">
         </div>
@@ -62,9 +63,22 @@
                 class="playlist-card-text"></span>
             <input hidden id="playlist-card-text-input-"
                 type="text" class="playlist-card-text-input" />
+                <input id="duplicate-list-button-"
+                type="button" class="playlist-card-button"
+                value="⎘" />
             <input id="delete-list-button-"
                 type="button" class="playlist-card-button"
                 value="🗑" />
+        </div>
+
+        <!-- PROTOTYPE FOR MAKING SONG CARDS -->
+        <div hidden id="song-card-prototype" class="song-card unselected-song-card">
+            <span class="song-card-number"></span>
+            <a class="song-card-title" href="#" target="_blank"></a>
+            <span class="song-card-year"></span>
+            <span class="song-card-by"> by </span>
+            <span class="song-card-artist"></span>
+            <input type="button" class="song-card-button" value="✕" />
         </div>
 
 
@@ -99,6 +113,24 @@
                 <div class="modal-south">
                     <input type="button" id="delete-list-confirm-button" class="modal-button" value='Confirm' />
                     <input type="button" id="delete-list-cancel-button" class="modal-button" value='Cancel' />
+                </div>
+            </div>
+        </div>
+
+        <!-- MODAL (i.e. dialog) FOR VERIFYING THE REMOVAL OF A SONG -->
+        <div class="modal" id="remove-song-modal" data-animation="slideInOutLeft">
+            <div class="modal-root" id='verify-remove-song-root'>
+                <div class="modal-north">
+                    Remove song?
+                </div>                
+                <div class="modal-center">
+                    <div class="modal-center-content">
+                        Are you sure you want to permanently remove <span id="remove-song-span"></span> from the playlist?
+                    </div>
+                </div>
+                <div class="modal-south">
+                    <input type="button" id="remove-song-confirm-button" class="modal-button" value='Confirm' />
+                    <input type="button" id="remove-song-cancel-button" class="modal-button" value='Cancel' />
                 </div>
             </div>
         </div>

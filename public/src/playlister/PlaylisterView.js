@@ -41,6 +41,7 @@ export default class PlaylisterView {
         let textInput = playlistCard.querySelector("#playlist-card-text-input-");
         textInput.id += newList.id;
 
+        playlistCard.querySelector('input[id^="duplicate-list-button-"]').id += newList.id;
         playlistCard.querySelector('input[id^="delete-list-button-"]').id += newList.id;
 
         playlistCard.hidden = false;
@@ -126,6 +127,7 @@ export default class PlaylisterView {
      */
     init() {
         this.disableButton('add-song-button');
+        this.disableButton('add-playlist-button');
         this.disableButton('undo-button');
         this.disableButton('redo-button');
         this.disableButton('close-button');
@@ -157,57 +159,44 @@ export default class PlaylisterView {
      * @param {Playlist} playlist The playlist whose songs are to be reshown.
      */
     refreshSongCards(playlist) {
+        console.log("songcards called with playlist:", playlist);
+        console.log("# of songs:", playlist.songs.length);
+        
         // CLEAR OUT THE OLD SONG CARDS
         let itemsDiv = document.getElementById("song-cards");
         itemsDiv.innerHTML = "";
 
         // FOR EACH SONG
         for (let i = 0; i < playlist.songs.length; i++) {
-            // MAKE AN ITEM (i.e. CARD)
+            console.log("Processing song", i, ":", playlist.getSongAt(i));
+            
+            // MAKE A DEEP COPY OF THE PROTOTYPE FOR OUR NEW SONG CARD
             let song = playlist.getSongAt(i);
-            let itemDiv = document.createElement("div");
-            itemDiv.classList.add("song-card");
-            itemDiv.classList.add("unselected-song-card");
-            itemDiv.id = "song-card-" + (i + 1);
+            let songCard = document.getElementById("song-card-prototype").cloneNode(true);
+            songCard.id = "song-card-" + (i + 1);
+            // The prototype uses the hidden attribute, not a "hidden" class
+            songCard.hidden = false;
+            songCard.classList.add("song-card", "unselected-song-card");
 
-            // HAVE THE TEXT LINK TO THE YOUTUBE VIDEO
-            let youTubeLink = document.createElement("a");
-            youTubeLink.classList.add("song-card-title");
-            youTubeLink.href = "https://www.youtube.com/watch?v=" + song.youTubeId;
-            youTubeLink.target = 1;
-            youTubeLink.innerHTML = song.title;
+            // FILL IN THE SONG DATA
+            songCard.querySelector(".song-card-number").textContent = (i + 1) + ". ";
+            
+            let titleLink = songCard.querySelector(".song-card-title");
+            titleLink.href = "https://www.youtube.com/watch?v=" + song.youTubeId;
+            titleLink.textContent = song.title;
+            
+            songCard.querySelector(".song-card-year").textContent = " (" + (song.year || "Unknown") + ")";
+            songCard.querySelector(".song-card-artist").textContent = song.artist;
+            
+            let removeButton = songCard.querySelector(".song-card-button");
+            removeButton.id = "remove-song-" + i;
 
-            let yearSpan = document.createElement("span");
-            yearSpan.className = "song-card-year";
-            yearSpan.innerHTML = " (" + (song.year || "Unknown") + ")";
-
-            let bySpan = document.createElement("span");
-            bySpan.className = "song-card-by";
-            bySpan.innerHTML = " by ";
-
-            let artistSpan = document.createElement("span");
-            artistSpan.className = "song-card-artist";
-            artistSpan.innerHTML = song.artist;
-
-            // PUT THE CONTENT INTO THE CARD
-            let songNumber = document.createTextNode("" + (i + 1) + ". ");
-            itemDiv.appendChild(songNumber);
-            itemDiv.appendChild(youTubeLink);
-            itemDiv.appendChild(yearSpan);
-            itemDiv.appendChild(bySpan);
-            itemDiv.appendChild(artistSpan);
-
-            // MAKE THE DELETE LIST BUTTON
-            let deleteButton = document.createElement("input");
-            deleteButton.setAttribute("type", "button");
-            deleteButton.setAttribute("id", "remove-song-" + i);
-            deleteButton.setAttribute("class", "song-card-button");
-            deleteButton.setAttribute("value", "\u2715");
-            itemDiv.appendChild(deleteButton);
-
-            // AND PUT THE CARD INTO THE UI
-            itemsDiv.appendChild(itemDiv);
+            // AND PUT THE NEW CARD INTO THE SONGS DIV
+            itemsDiv.appendChild(songCard);
+            console.log("added song ard to DOM:", songCard);
         }
+        console.log("total songcards in DOM:", itemsDiv.children.length);
+        
         // NOW THAT THE CONTROLS EXIST WE CAN REGISTER EVENT
         // HANDLERS FOR THEM
         this.controller.registerSongCardHandlers();
@@ -267,13 +256,39 @@ export default class PlaylisterView {
      * buttons cannot be used they are disabled.
      */
     updateToolbarButtons(hasCurrentList, isConfirmDialogOpen, hasTransactionToDo, hasTransactionToUndo) {
-        this.enableButton("close-button");
-        this.enableButton("add-song-button");
-        if (!hasTransactionToUndo) {
+        // CLOSE LIST BUTTON - only enabled if a list is loaded
+        if (hasCurrentList) {
+            this.enableButton("close-button");
+        } else {
+            this.disableButton("close-button");
+        }
+        
+        // ADD SONG BUTTON - only enabled if a list is loaded and not being edited
+        if (hasCurrentList && !this.model.isListNameBeingChanged()) {
+            this.enableButton("add-song-button");
+        } else {
+            this.disableButton("add-song-button");
+        }
+        
+        // ADD LIST BUTTON - disabled if a list is being edited
+        if (this.model.isListNameBeingChanged()) {
+            this.disableButton("add-playlist-button");
+        } else {
+            this.enableButton("add-playlist-button");
+        }
+        
+        // UNDO BUTTON - only enabled if there are transactions to undo
+        if (hasTransactionToUndo) {
+            this.enableButton("undo-button");
+        } else {
             this.disableButton("undo-button");
         }
-        else {
-            this.enableButton("undo-button");
+        
+        // REDO BUTTON - only enabled if there are transactions to redo
+        if (hasTransactionToDo) {
+            this.enableButton("redo-button");
+        } else {
+            this.disableButton("redo-button");
         }
     }
 }

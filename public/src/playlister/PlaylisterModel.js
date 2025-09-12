@@ -4,6 +4,7 @@ import PlaylistSongPrototype from './PlaylistSongPrototype.js';
 import CreateSong_Transaction from "./transactions/CreateSong_Transaction.js";
 import MoveSong_Transaction from "./transactions/MoveSong_Transaction.js";
 import RemoveSong_Transaction from "./transactions/RemoveSong_Transaction.js";
+import EditSong_Transaction from "./transactions/EditSong_Transaction.js";
 import PlaylistBuilder from './PlaylistBuilder.js';
 
 /**
@@ -72,6 +73,44 @@ export default class PlaylisterModel {
     }
 
     /**
+     * Creates and adds a new empty playlist titled "Untitled".
+     * 
+     * @return {Playlist} The list that was added.
+     */
+    addNewPlaylist() {
+        // GET THE BUILDER SINGLETON
+        let playlistBuilder = PlaylistBuilder.getSingleton();
+        let newList = playlistBuilder.buildNewPlaylist("Untitled");
+        return this.addList(newList);
+    }
+
+    /**
+     * Duplicates a playlist with all its songs and selects the duplicate.
+     * 
+     * @param {number} id The id of the playlist to duplicate.
+     * @return {Playlist} The duplicated playlist.
+     */
+    duplicatePlaylist(id) {
+        let originalPlaylist = this.getPlaylist(id);
+        if (originalPlaylist) {
+            // CREATE DEEP COPY OF SONGS
+            let duplicatedSongs = [];
+            for (let i = 0; i < originalPlaylist.songs.length; i++) {
+                duplicatedSongs.push(originalPlaylist.songs[i].clone());
+            }
+            
+            // CREATE NEW PLAYLIST WITH (Copy) SUFFIX
+            let duplicatedPlaylist = this.addNewList(originalPlaylist.name + " (Copy)", duplicatedSongs);
+            
+            // SELECT THE DUPLICATED PLAYLIST
+            this.selectList(duplicatedPlaylist);
+            
+            return duplicatedPlaylist;
+        }
+        return null;
+    }
+
+    /**
      * Adds an undoable transaction for creating a song to the transaction stack.
      */
     addTransactionToCreateSong() {
@@ -105,6 +144,22 @@ export default class PlaylisterModel {
     addTransactionToRemoveSong(index) {
         let song = this.getSong(index);
         let transaction = new RemoveSong_Transaction(this, index, song);
+        this.tps.processTransaction(transaction);
+        this.view.updateToolbarButtons(this.hasCurrentList(), 
+                            this.confirmDialogOpen, this.tps.hasTransactionToDo(), this.tps.hasTransactionToUndo());
+    }
+
+    /**
+     * Adds an undoable transaction for editing a song to the transaction stack.
+     * 
+     * @param {number} index The index of the song to edit
+     * @param {string} title The new title for the song
+     * @param {string} artist The new artist for the song
+     * @param {number} year The new year for the song
+     * @param {string} youTubeId The new YouTube ID for the song
+     */
+    addTransactionToEditSong(index, title, artist, year, youTubeId) {
+        let transaction = new EditSong_Transaction(this, index, title, artist, year, youTubeId);
         this.tps.processTransaction(transaction);
         this.view.updateToolbarButtons(this.hasCurrentList(), 
                             this.confirmDialogOpen, this.tps.hasTransactionToDo(), this.tps.hasTransactionToUndo());
@@ -262,8 +317,12 @@ export default class PlaylisterModel {
      * @param {string} id The id of the list to load into the workspace UI.
      */
     loadList(id) {
+        console.log("loadList called with id:", id);
+        console.log("Available playlists:", this.playlists);
+        
         // If user attempts to reload the currentList, then do nothing.
         if (this.hasCurrentList() && id === this.currentList.id) {
+            console.log("Reloading current list, doing nothing");
             this.view.highlightList(id);
             return;
         }
@@ -273,12 +332,19 @@ export default class PlaylisterModel {
         let i = 0;
         while ((i < this.playlists.length) && !found) {
             list = this.playlists[i];
+            console.log("Checking playlist", i, ":", list, "id:", list.id);
             if (list.id === id) {
+                console.log("Found matching playlist, selecting it");
                 this.selectList(list);
                 found = true;
             }
             i++;
         }
+        
+        if (!found) {
+            console.log("No playlist found with id:", id);
+        }
+        
         this.tps.clearAllTransactions();
         let listName = "";
         if (this.hasCurrentList())
@@ -402,6 +468,9 @@ export default class PlaylisterModel {
      * @param {Playlist} listToSelect The list to select.
      */
     selectList(listToSelect) {
+        console.log("selectList called with:", listToSelect);
+        console.log("Songs in playlist:", listToSelect.songs);
+        
         // THIS IS THE LIST TO LOAD
         this.currentList = listToSelect;
         this.view.refreshSongCards(this.currentList);
@@ -417,6 +486,26 @@ export default class PlaylisterModel {
      */
     setDeleteListId(initId) {
         this.deleteListId = initId;
+    }
+
+    /**
+     * Mutator method for setting the song index to remove, which is used such that
+     * the dialog event handler verification can coordinate a proper response.
+     * 
+     * @param {number} initIndex The index of the song to remove.
+     */
+    setRemoveSongIndex(initIndex) {
+        this.removeSongIndex = initIndex;
+    }
+
+    /**
+     * Accessor method for getting the index of the song to remove. This is used
+     * during the modal verification.
+     * 
+     * @return {number} The index of the song being removed.
+     */
+    getRemoveSongIndex() {
+        return this.removeSongIndex;
     }
 
     /**

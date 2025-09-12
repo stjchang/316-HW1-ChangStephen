@@ -79,6 +79,12 @@ export class PlaylisterApp {
         if (!success) {
             this.loadListsFromJSON("./data/default_lists.json");
         }
+        
+        // UPDATE TOOLBAR BUTTONS TO REFLECT INITIAL STATE
+        this.view.updateToolbarButtons(this.model.hasCurrentList(), 
+                            this.model.confirmDialogOpen, 
+                            this.model.tps.hasTransactionToDo(), 
+                            this.model.tps.hasTransactionToUndo());
     }
 }
 
